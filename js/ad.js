@@ -17,6 +17,13 @@
   var bgIndex = -1;
   var curBgId = null;
   var AD_START = Date.now();
+  var bgLoaded = false;
+
+  function onBgLoaded() {
+    if (bgLoaded) return;
+    bgLoaded = true;
+    if (layersEl) layersEl.style.opacity = '1';
+  }
 
   function byId(id) { return document.getElementById(id); }
   function resById(id) { return (id && resources) ? (resources[id] || null) : null; }
@@ -262,6 +269,7 @@
     var container = byId('bg');
     if (!container) return;
     var items = C.backgrounds || [];
+    if (items.length === 0) onBgLoaded();
     if (C.bgColor) container.style.backgroundColor = C.bgColor;
 
     for (var i = 0; i < items.length; i++) {
@@ -290,9 +298,15 @@
         el.style.width = '100%';
         el.style.height = '100%';
         el.style.objectFit = 'cover';
+        el.addEventListener('canplay', onBgLoaded);
+        el.addEventListener('error', onBgLoaded);
         el.addEventListener('error', function () { try { console.log('[ALAD] video error', it.src); } catch (e3) {} });
       } else {
         el = document.createElement('div');
+        var img = new Image();
+        img.onload = onBgLoaded;
+        img.onerror = onBgLoaded;
+        img.src = it.src;
         el.style.backgroundImage = "url('" + it.src + "')";
         el.style.backgroundSize = 'cover';
         el.style.backgroundPosition = 'center';
@@ -804,6 +818,7 @@
 
   function buildElements() {
     layersEl = byId('layers');
+    layersEl.style.opacity = '0';
     var items = C.elements || [];
     for (var i = 0; i < items.length; i++) {
       var cfg = items[i];
